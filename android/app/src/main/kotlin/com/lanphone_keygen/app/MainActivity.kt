@@ -1,4 +1,4 @@
-package com.lanphone.app
+package com.lanphone_keygen
 
 import android.os.Build
 import android.os.Bundle
