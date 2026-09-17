@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.lanphone.app"
+    namespace = "com.lanphone_keygen"
     compileSdk = 34
     ndkVersion = "27.0.12077973"
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lanphone.app"
+        applicationId = "com.lanphone_keygen"
         minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode
