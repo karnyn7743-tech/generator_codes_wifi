@@ -1,29 +1,31 @@
-name: key_generator_app
-description: "تطبيق مولّد مفاتيح التفعيل المخصص لتطبيق مولد أوراق الإختبارات"
+name: lanphone_keygen
+description: "مولّد مفاتيح تنشيط لتطبيق LanPhone — أداة خاصة للمطوّر"
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
 
 dependencies:
   flutter:
     sdk: flutter
-    
-  # مكتبة التشفير لتوليد المفاتيح بنفس خوارزمية SHA-256
-  crypto: ^3.0.3
+
+  cupertino_icons: ^1.0.8
+
+  # للتشفير (نفس ما يستخدمه LanPhone)
+  crypto: ^3.0.5
+
+  # لحفظ سجل المفاتيح
+  shared_preferences: ^2.3.2
+
+  # لللصق والنسخ السريع
+  # (نستخدم Clipboard من Flutter مباشرة — لا حاجة لحزمة)
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
-
-  # دعم الخطوط العربية
-  # fonts:
-  #   - family: Cairo
-  #     fonts:
-  #       - asset: assets/fonts/Cairo-Regular.ttf
