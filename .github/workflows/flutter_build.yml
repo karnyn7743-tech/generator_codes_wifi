@@ -1,4 +1,4 @@
-name: Build LanPhone KeyGen APK
+name: Build LanPhone_KeyGen APK
 
 on:
   push:
