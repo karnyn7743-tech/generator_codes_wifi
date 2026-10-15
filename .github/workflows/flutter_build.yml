@@ -96,6 +96,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: lanphone-keygen-apk
+          name: key_gen_app-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
