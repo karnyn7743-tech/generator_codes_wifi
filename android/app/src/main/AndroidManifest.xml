@@ -10,7 +10,7 @@
     <!-- === التطبيق ===                                              -->
     <!-- ============================================================ -->
     <application
-        android:label="LanPhone KeyGen"
+        android:label="admins key wifi"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
