@@ -1,31 +1,18 @@
-name: lanphone_keygen
-description: "مولّد مفاتيح تنشيط لتطبيق LanPhone — أداة خاصة للمطوّر"
+name: key_gen_app
+description: "Master Key Generator for Network Admin Controller App"
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.0
-  flutter: ">=3.24.0"
+  sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
-
-  # للتشفير (نفس ما يستخدمه LanPhone)
-  crypto: ^3.0.5
-
-  # لحفظ سجل المفاتيح
-  shared_preferences: ^2.3.2
-
-  # لللصق والنسخ السريع
-  # (نستخدم Clipboard من Flutter مباشرة — لا حاجة لحزمة)
-
-dev_dependencies:
-  flutter_test:
+  flutter_localizations:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  crypto: ^3.0.3
+  shared_preferences: ^2.3.2
 
 flutter:
   uses-material-design: true
