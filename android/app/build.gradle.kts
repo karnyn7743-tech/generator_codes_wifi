@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.lanphone.keygen"
+    namespace = "com.key_gen_app"
     compileSdk = flutter.compileSdkVersion
 
     compileOptions {
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lanphone.keygen"
+        applicationId = "com.key_gen_app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
