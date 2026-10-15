@@ -16,7 +16,7 @@ class MasterKeygenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مولّد مفاتيح التنشيط',
+      title: 'مولّد مفاتيح مشرف الشبكات',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
