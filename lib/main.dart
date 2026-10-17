@@ -14,7 +14,7 @@ class ExamKeyGenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مولّد مفاتيح التنشيط',
+      title: 'مفاتيح تنشيط المحرر البسيط للإختبارات',
       debugShowCheckedModeBanner: false,
       locale: const Locale('ar', 'YE'),
       supportedLocales: const [Locale('ar', 'YE'), Locale('ar', '')],
