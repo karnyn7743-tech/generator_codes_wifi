@@ -10,7 +10,7 @@
     <!-- === التطبيق ===                                              -->
     <!-- ============================================================ -->
     <application
-        android:label="admins key wifi"
+        android:label="admins key exam"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
