@@ -1,4 +1,4 @@
-package com.key_gen_app
+package com.exam_key_gen
 
 import io.flutter.embedding.android.FlutterActivity
 
