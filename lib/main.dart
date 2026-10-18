@@ -14,7 +14,7 @@ class ExamKeyGenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مفاتيح تنشيط المحرر البسيط للإختبارات',
+      title: 'مولّد مفاتيح التنشيط والتجربة',
       debugShowCheckedModeBanner: false,
       locale: const Locale('ar', 'YE'),
       supportedLocales: const [Locale('ar', 'YE'), Locale('ar', '')],
@@ -46,14 +46,14 @@ class KeyGeneratorScreen extends StatefulWidget {
 }
 
 class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
-  // المفتاح السري المطابق تماماً لما في التطبيق الرئيسي
   static const String _secretSalt = 'EXAM_MAKER_SECURE_SALT_2026_@ALBAETHEE';
 
   final TextEditingController _deviceIdController = TextEditingController();
   final TextEditingController _teacherNameController = TextEditingController();
   String _generatedKey = '';
+  bool _isTrial = false;
 
-  void _generateKey() {
+  void _generateKey({required bool isTrial}) {
     final rawDevice = _deviceIdController.text.trim();
     if (rawDevice.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,16 +65,17 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
       return;
     }
 
-    // تنظيف رمز الجهاز وإزالة الفواصل
     final cleanDevice = rawDevice.replaceAll('-', '').trim().toUpperCase();
-    final combined = '$cleanDevice:$_secretSalt';
+    final mode = isTrial ? 'TRIAL' : 'FULL';
+    final combined = '$cleanDevice:$mode:$_secretSalt';
     final hash = sha256.convert(utf8.encode(combined)).toString().toUpperCase();
 
-    // تشكيل المفتاح المكون من 16 خانة (4 مجموعات)
-    final key = '${hash.substring(0, 4)}-${hash.substring(4, 8)}-${hash.substring(8, 12)}-${hash.substring(12, 16)}';
+    final prefix = isTrial ? 'TR' : 'FL';
+    final key = '$prefix-${hash.substring(0, 4)}-${hash.substring(4, 8)}-${hash.substring(8, 12)}';
 
     setState(() {
       _generatedKey = key;
+      _isTrial = isTrial;
     });
   }
 
@@ -83,7 +84,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
     Clipboard.setData(ClipboardData(text: _generatedKey));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('تم نسخ مفتاح التنشيط إلى الحافظة بنجاح'),
+        content: Text('تم نسخ المفتاح بنجاح'),
         backgroundColor: Colors.teal,
         duration: Duration(seconds: 2),
       ),
@@ -97,15 +98,23 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
     if (teacher.isNotEmpty) {
       msg.writeln('مرحباً بك أستاذ/ $teacher');
     }
-    msg.writeln('مفتاح تنشيط تطبيق صانع الاختبارات لجهازك:');
-    msg.writeln('رمز الجهاز: ${_deviceIdController.text.trim().toUpperCase()}');
-    msg.writeln('مفتاح التنشيط: $_generatedKey');
-    msg.writeln('ملاحظة: هذا المفتاح مخصص لجهازك فقط ولا يعمل على جهاز آخر.');
+
+    if (_isTrial) {
+      msg.writeln('تم إصدار (كود التجربة المجاني) لتطبيق صانع الاختبارات:');
+      msg.writeln('رمز جهازك: ${_deviceIdController.text.trim().toUpperCase()}');
+      msg.writeln('كود التجربة: $_generatedKey');
+      msg.writeln('ملاحظة: يتيح لك هذا الكود تصميم وتصدير اختبار كامل لتجربة التنسيق والطباعة.');
+    } else {
+      msg.writeln('تم إصدار (مفتاح التنشيط الكامل الدائم) لتطبيق صانع الاختبارات:');
+      msg.writeln('رمز جهازك: ${_deviceIdController.text.trim().toUpperCase()}');
+      msg.writeln('مفتاح التنشيط: $_generatedKey');
+      msg.writeln('مبروك! هذا المفتاح يفتح لك كامل ميزات التطبيق مدى الحياة.');
+    }
 
     Clipboard.setData(ClipboardData(text: msg.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('تم نسخ رسالة الترخيص المكتملة لإرسالها للمعلم'),
+        content: Text('تم نسخ رسالة واتساب جاهزة للإرسال'),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 3),
       ),
@@ -117,7 +126,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'مولد مفاتيح التنشيط | Exam Key Gen',
+          'مولد مفاتيح التنشيط والتجربة | Exam Key Gen',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
@@ -143,7 +152,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                     Icon(Icons.vpn_key_rounded, color: Color(0xFF38BDF8), size: 28),
                     SizedBox(width: 8),
                     Text(
-                      'إصدار ترخيص جديد للمعلم',
+                      'إصدار ترخيص / كود تجربة',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -158,7 +167,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                   controller: _teacherNameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'اسم المعلم / المدرسة (اختياري للتوثيق)',
+                    labelText: 'اسم المعلم / المدرسة (للتوثيق)',
                     labelStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                     prefixIcon: const Icon(Icons.person, color: Color(0xFF38BDF8)),
                     filled: true,
@@ -190,18 +199,42 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                  label: const Text(
-                    'توليد مفتاح التنشيط',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  onPressed: _generateKey,
+                Row(
+                  children: [
+                    // زر إصدار كود تجربة
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F766E),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.timer_outlined, color: Colors.white, size: 18),
+                        label: const Text(
+                          'كود تجربة مجاني',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        onPressed: () => _generateKey(isTrial: true),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // زر إصدار ترخيص دائم
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.verified, color: Colors.white, size: 18),
+                        label: const Text(
+                          'مفتاح كامل دائم',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        onPressed: () => _generateKey(isTrial: false),
+                      ),
+                    ),
+                  ],
                 ),
 
                 if (_generatedKey.isNotEmpty) ...[
@@ -211,13 +244,20 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF0F172A),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF059669), width: 1.2),
+                      border: Border.all(
+                        color: _isTrial ? const Color(0xFF0F766E) : const Color(0xFF2563EB),
+                        width: 1.4,
+                      ),
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          'مفتاح التنشيط المولد:',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        Text(
+                          _isTrial ? 'كود التجربة المولد (اختبار واحد):' : 'مفتاح التنشيط الدائم المولد:',
+                          style: TextStyle(
+                            color: _isTrial ? Colors.tealAccent : Colors.lightBlueAccent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         SelectableText(
@@ -228,7 +268,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2.0,
                             fontFamily: 'monospace',
-                            color: Color(0xFF34D399),
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -241,7 +281,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                                   side: const BorderSide(color: Colors.blueGrey),
                                 ),
                                 icon: const Icon(Icons.copy, size: 16),
-                                label: const Text('نسخ المفتاح فقط', style: TextStyle(fontSize: 12)),
+                                label: const Text('نسخ الكود فقط', style: TextStyle(fontSize: 12)),
                                 onPressed: _copyKey,
                               ),
                             ),
@@ -253,7 +293,7 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
                                 ),
                                 icon: const Icon(Icons.share, color: Colors.white, size: 16),
                                 label: const Text(
-                                  'نسخ رسالة واتساب',
+                                  'رسالة واتساب',
                                   style: TextStyle(color: Colors.white, fontSize: 12),
                                 ),
                                 onPressed: _copyFullShareMessage,
