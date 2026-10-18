@@ -1,4 +1,4 @@
-name: Build key_gen_app APK
+name: Build exam_key_gen APK
 
 on:
   push:
