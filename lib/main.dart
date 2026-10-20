@@ -1,94 +1,108 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:encrypt/encrypt.dart' as enc;
 
 void main() {
-  runApp(const KeyGenApp());
+  runApp(const KeyGeneratorApp());
 }
 
-class KeyGenApp extends StatelessWidget {
-  const KeyGenApp({super.key});
+class KeyGeneratorApp extends StatelessWidget {
+  const KeyGeneratorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مولّد مفاتيح كنترول الاختبارات',
+      title: 'مولّد مفاتيح نظام الأرشفة',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        );
-      },
-      home: const KeyGeneratorScreen(),
+      home: const GeneratorScreen(),
     );
   }
 }
 
-class KeyGeneratorScreen extends StatefulWidget {
-  const KeyGeneratorScreen({super.key});
+class GeneratorScreen extends StatefulWidget {
+  const GeneratorScreen({super.key});
 
   @override
-  State<KeyGeneratorScreen> createState() => _KeyGeneratorScreenState();
+  State<GeneratorScreen> createState() => _GeneratorScreenState();
 }
 
-class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
-  // نفس الأملاح المستخدمة في تطبيق الكنترول بدقة
-  static const String _secretSaltPermanent = "STUGRA_SCAN_SECRET_KEY_2026";
-  static const String _secretSaltTrial = "STUGRA_TRIAL_KEY_2026";
+class _GeneratorScreenState extends State<GeneratorScreen> {
+  // نفس المفتاح السري الموجود في تطبيق الأرشفة تماماً
+  static const String _secretKeyString = "MySecretKeyArchivesApp2026!#Safe";
 
   final TextEditingController _deviceIdController = TextEditingController();
-  String _permanentKey = "";
-  String _trialKey = "";
+  final TextEditingController _daysController = TextEditingController(text: "15");
 
-  // توليد المفتاح الدائم: STUG-XXXX-YYYY
-  String _generatePermanentKey(String deviceId) {
-    var bytes = utf8.encode(deviceId.trim() + _secretSaltPermanent);
-    var digest = sha256.convert(bytes).toString().toUpperCase();
-    String part1 = digest.substring(0, 4);
-    String part2 = digest.substring(4, 8);
-    return "STUG-$part1-$part2";
-  }
+  String _licenseType = "TRIAL"; // 'TRIAL' أو 'LIFETIME'
+  String _generatedKey = "";
 
-  // توليد مفتاح التجربة (24 ساعة): TRIAL-XXXX-YYYY
-  String _generateTrialKey(String deviceId) {
-    var bytes = utf8.encode(deviceId.trim() + _secretSaltTrial);
-    var digest = sha256.convert(bytes).toString().toUpperCase();
-    String part1 = digest.substring(0, 4);
-    String part2 = digest.substring(4, 8);
-    return "TRIAL-$part1-$part2";
-  }
+  void _generateKey() {
+    final deviceId = _deviceIdController.text.trim().toUpperCase();
 
-  void _generateKeys() {
-    String deviceId = _deviceIdController.text.trim();
     if (deviceId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("يرجى لصق معرّف الجهاز (Device ID) أولاً!")),
+        const SnackBar(
+          content: Text('يرجى إدخال معرّف الجهاز الخاص بالعميل أولاً'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
-    setState(() {
-      _permanentKey = _generatePermanentKey(deviceId);
-      _trialKey = _generateTrialKey(deviceId);
-    });
+    try {
+      final keyBytes = enc.Key.fromUtf8(_secretKeyString);
+      final iv = enc.IV.fromLength(16);
+      final encrypter = enc.Encrypter(enc.AES(keyBytes, mode: enc.AESMode.cbc));
+
+      String payload = "";
+
+      if (_licenseType == "LIFETIME") {
+        // مفتاح مدى الحياة
+        payload = "$deviceId|LIFETIME|NONE";
+      } else {
+        // مفتاح تجريبي
+        final int days = int.tryParse(_daysController.text.trim()) ?? 15;
+        final DateTime expiry = DateTime.now().add(Duration(days: days));
+        final String expiryStr =
+            "${expiry.year}-${expiry.month.toString().padLeft(2, '0')}-${expiry.day.toString().padLeft(2, '0')}";
+        payload = "$deviceId|TRIAL|$expiryStr";
+      }
+
+      final encrypted = encrypter.encrypt(payload, iv: iv);
+
+      setState(() {
+        _generatedKey = encrypted.base64;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ أثناء التوليد: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  void _copyToClipboard(String text, String label) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("تم نسخ $label بنجاح")),
-    );
+  void _copyToClipboard() {
+    if (_generatedKey.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: _generatedKey));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم نسخ مفتاح التنشيط بنجاح!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
     _deviceIdController.dispose();
+    _daysController.dispose();
     super.dispose();
   }
 
@@ -96,134 +110,161 @@ class _KeyGeneratorScreenState extends State<KeyGeneratorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("مولّد مفاتيح الكنترول 2026", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text('مولّد مفاتيح التنشيط'),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.vpn_key_rounded, size: 70, color: Colors.deepPurple),
-            const SizedBox(height: 10),
-            const Text(
-              "إصدار كود التنشيط أو التجربة",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-
-            // حقل إدخال معرّف الجهاز
-            TextField(
-              controller: _deviceIdController,
-              decoration: InputDecoration(
-                labelText: "معرّف جهاز العميل (Device ID)",
-                hintText: "الصق معرّف الجهاز هنا",
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.phone_android),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.paste),
-                  onPressed: () async {
-                    ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
-                    if (data?.text != null) {
-                      _deviceIdController.text = data!.text!.trim();
-                    }
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            // زر التوليد
-            ElevatedButton.icon(
-              onPressed: _generateKeys,
-              icon: const Icon(Icons.lock_open, color: Colors.white),
-              label: const Text(
-                "توليد المفاتيح",
-                style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // بطاقة المفتاح الدائم
-            if (_permanentKey.isNotEmpty) ...[
-              _buildKeyCard(
-                title: "المفتاح الدائم (مدى الحياة)",
-                keyText: _permanentKey,
-                cardColor: Colors.green.shade50,
-                borderColor: Colors.green,
-                textColor: Colors.green.shade900,
-                onCopy: () => _copyToClipboard(_permanentKey, "المفتاح الدائم"),
-              ),
-              const SizedBox(height: 15),
-
-              // بطاقة مفتاح التجربة (يوم واحد)
-              _buildKeyCard(
-                title: "مفتاح التجربة (صالح لمدة 24 ساعة)",
-                keyText: _trialKey,
-                cardColor: Colors.amber.shade50,
-                borderColor: Colors.amber.shade800,
-                textColor: Colors.amber.shade900,
-                onCopy: () => _copyToClipboard(_trialKey, "مفتاح التجربة"),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildKeyCard({
-    required String title,
-    required String keyText,
-    required Color cardColor,
-    required Color borderColor,
-    required Color textColor,
-    required VoidCallback onCopy,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
-          ),
-          const SizedBox(height: 8),
-          Row(
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: SelectableText(
-                  keyText,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                    color: textColor,
+              const Card(
+                elevation: 0,
+                color: Color(0xFFE8F5E9),
+                child: Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.vpn_key_rounded, color: Colors.teal),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'أداة الإدارة الخاصة بتوليد تراخيص تطبيق الأرشفة والسكرتارية',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.copy, color: textColor),
-                onPressed: onCopy,
-                tooltip: "نسخ الكود",
+              const SizedBox(height: 20),
+
+              // حقل كود الجهاز
+              TextField(
+                controller: _deviceIdController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                decoration: InputDecoration(
+                  labelText: 'معرّف جهاز العميل (Device ID)',
+                  hintText: 'مثال: A1B2C3D4E5F6',
+                  prefixIcon: const Icon(Icons.phone_android),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () => _deviceIdController.clear(),
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
               ),
+              const SizedBox(height: 16),
+
+              // اختيار نوع المفتاح
+              const Text(
+                'نوع التفعيل:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('تجريبي'),
+                      value: 'TRIAL',
+                      groupValue: _licenseType,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setState(() => _licenseType = val!);
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('مدى الحياة'),
+                      value: 'LIFETIME',
+                      groupValue: _licenseType,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setState(() => _licenseType = val!);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              // حقل عدد الأيام في حالة التجريبي
+              if (_licenseType == 'TRIAL') ...[
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _daysController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    labelText: 'مدة الصلاحية بالأيام',
+                    suffixText: 'يوم',
+                    prefixIcon: Icon(Icons.timer_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // زر التوليد
+              ElevatedButton.icon(
+                onPressed: _generateKey,
+                icon: const Icon(Icons.lock_open_rounded),
+                label: const Text('توليد مفتاح التنشيط', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // عرض النتيجة
+              if (_generatedKey.isNotEmpty) ...[
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'المفتاح الناتج للعميل:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.teal),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.teal.shade300),
+                  ),
+                  child: SelectableText(
+                    _generatedKey,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _copyToClipboard,
+                  icon: const Icon(Icons.copy_rounded),
+                  label: const Text('نسخ المفتاح للإرسال عبر واتساب'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ],
             ],
           ),
-        ],
+        ),
       ),
     );
   }
