@@ -1,4 +1,4 @@
-name: Build exam_key_gen APK
+name: Build exams_automation_key APK
 
 on:
   push:
@@ -95,6 +95,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: exam_key_gen-apk
+          name: exams_automation_key-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
