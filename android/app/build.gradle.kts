@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.exams_automation_key"
+    namespace = "com.archives_key"
     compileSdk = flutter.compileSdkVersion
 
     compileOptions {
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.exams_automation_key"
+        applicationId = "com.archives_key"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
