@@ -10,7 +10,7 @@
     <!-- === التطبيق ===                                              -->
     <!-- ============================================================ -->
     <application
-        android:label="exams_automation_key"
+        android:label="archives_key"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
