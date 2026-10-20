@@ -9,6 +9,7 @@ plugins {
 android {
     namespace = "com.archives_key"
     compileSdk = flutter.compileSdkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
