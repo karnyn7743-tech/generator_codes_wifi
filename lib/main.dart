@@ -31,13 +31,15 @@ class GeneratorScreen extends StatefulWidget {
 }
 
 class _GeneratorScreenState extends State<GeneratorScreen> {
-  // نفس المفتاح السري الموجود في تطبيق الأرشفة تماماً
+  // المفتاح السري بطول 32 بايت تماماً
   static const String _secretKeyString = "MySecretKeyArchivesApp2026!#Safe";
+  // متجه التهيئة الثابت بطول 16 بايت تماماً
+  static const String _fixedIV = "1234567890123456";
 
   final TextEditingController _deviceIdController = TextEditingController();
   final TextEditingController _daysController = TextEditingController(text: "15");
 
-  String _licenseType = "TRIAL"; // 'TRIAL' أو 'LIFETIME'
+  String _licenseType = "TRIAL";
   String _generatedKey = "";
 
   void _generateKey() {
@@ -55,16 +57,14 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
 
     try {
       final keyBytes = enc.Key.fromUtf8(_secretKeyString);
-      final iv = enc.IV.fromLength(16);
+      final iv = enc.IV.fromUtf8(_fixedIV);
       final encrypter = enc.Encrypter(enc.AES(keyBytes, mode: enc.AESMode.cbc));
 
       String payload = "";
 
       if (_licenseType == "LIFETIME") {
-        // مفتاح مدى الحياة
         payload = "$deviceId|LIFETIME|NONE";
       } else {
-        // مفتاح تجريبي
         final int days = int.tryParse(_daysController.text.trim()) ?? 15;
         final DateTime expiry = DateTime.now().add(Duration(days: days));
         final String expiryStr =
@@ -141,8 +141,6 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // حقل كود الجهاز
               TextField(
                 controller: _deviceIdController,
                 textAlign: TextAlign.center,
@@ -159,8 +157,6 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // اختيار نوع المفتاح
               const Text(
                 'نوع التفعيل:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -192,8 +188,6 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                   ),
                 ],
               ),
-
-              // حقل عدد الأيام في حالة التجريبي
               if (_licenseType == 'TRIAL') ...[
                 const SizedBox(height: 8),
                 TextField(
@@ -208,10 +202,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                   ),
                 ),
               ],
-
               const SizedBox(height: 24),
-
-              // زر التوليد
               ElevatedButton.icon(
                 onPressed: _generateKey,
                 icon: const Icon(Icons.lock_open_rounded),
@@ -222,10 +213,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
                   foregroundColor: Colors.white,
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // عرض النتيجة
               if (_generatedKey.isNotEmpty) ...[
                 const Divider(),
                 const SizedBox(height: 12),
