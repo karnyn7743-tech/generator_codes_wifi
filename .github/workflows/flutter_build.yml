@@ -96,5 +96,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: archives_key-apk
-          path: build/app/outputs/flutter-apk/archives-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
