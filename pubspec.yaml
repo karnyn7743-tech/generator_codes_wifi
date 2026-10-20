@@ -1,5 +1,5 @@
-name: exam_key_gen
-description: "Master Key Generator for Exam Maker App"
+name: exams_automation_key
+description: "Master Key Generator for Exams automation App"
 publish_to: 'none'
 version: 1.0.0+1
 
